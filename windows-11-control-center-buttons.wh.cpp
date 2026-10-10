@@ -6,6 +6,7 @@
 // @author              Salyts
 // @github              https://github.com/Salyts
 // @donateUrl           https://ko-fi.com/salyts
+// @homepage            https://github.com/Salyts/Windows-11-Control-Center-Buttons
 // @license             MIT
 // @include             ShellHost.exe
 // @include             explorer.exe
