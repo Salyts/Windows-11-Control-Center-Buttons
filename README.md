@@ -1,13 +1,12 @@
 # Windows 11 Control Center Buttons
 
+• **[Report a bug or suggest a feature](https://github.com/Salyts/Windows-11-Control-Center-Buttons/issues)** · **[Discussion on Discord](https://discord.com/channels/923944342991818753/1558419938820227123)** · **[Support](https://ko-fi.com/salyts)**
+
 Removes the stock **Settings (gear)** button from the bottom bar of the Windows 11
 Control Center panel and puts your own buttons there instead.
 
-**Supported:** Windows 11 25H2 (build 26200), where Control Center is hosted by
-`ShellHost.exe`. Older builds host it in `ShellExperienceHost.exe` and are **not supported**.
-
 `explorer.exe` is included only to launch actions: the panel host sends the click to a
-tiny hidden window inside Explorer, which runs the command (same idea as the Start menu mod).
+tiny hidden window inside Explorer, which runs the command.
 
 | Before | After |
 |--------|---------|
