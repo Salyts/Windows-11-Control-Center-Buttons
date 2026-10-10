@@ -2,11 +2,9 @@
 
 • **[Report a bug or suggest a feature](https://github.com/Salyts/Windows-11-Control-Center-Buttons/issues)** · **[Discussion on Discord](https://discord.com/channels/923944342991818753/1558419938820227123)** · **[Support](https://ko-fi.com/salyts)**
 
-Removes the stock **Settings (gear)** button from the bottom bar of the Windows 11
-Control Center panel and puts your own buttons there instead.
+Removes the stock **Settings (gear)** button from the bottom bar of the Windows 11 Control Center panel and puts your own buttons there instead.
 
-`explorer.exe` is included only to launch actions: the panel host sends the click to a
-tiny hidden window inside Explorer, which runs the command.
+Actions are run by a dedicated Windhawk tool-mod process (`windhawk.exe -tool-mod`), the panel host sends the click to a tiny hidden window inside that process, which runs the command.
 
 | Before | After |
 |--------|---------|
@@ -30,7 +28,7 @@ tiny hidden window inside Explorer, which runs the command.
 | `" "` | `"C:\Program Files\Windhawk\windhawk.exe"` | Opens a file or folder by absolute path. |
 | `~` | `~Downloads` or `~windhawk.exe` | Opens a folder or file by name. |
 | `cmd:` | `cmd:control` | Runs a command through `cmd.exe`. |
-| `shell:` | `shell:shutdown /r /f /t 0` | Runs through `powershell.exe`. |
+| `ps:` or `powershell:` | `ps:shutdown /r /f /t 0` | Runs through `powershell.exe` |
 | `press:` | `press:Win+E` or `press:0x5B;0x45` | Keyboard key press using [Win32 key code](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes). |
 | `web:` | `web:https://windhawk.net/` | Opens a URL in the default browser. |
 | `ms-settings:` | `ms-settings:bluetooth` | Opens a Windows Settings page. |
@@ -38,7 +36,7 @@ tiny hidden window inside Explorer, which runs the command.
 ### Modifier signs (prepend to any action)
 | Sign | Example | Description |
 |------|---------|-------------|
-| `-` | `-"C:\Program Files\app.exe"` or `-shell:shutdown /r /f /t 0` | Runs as administrator. |
-| `*` | `*cmd:tasklist` or `*shell:Get-Process` | Execution with a terminal window. (only for `cmd:` and `shell:` prefixes). |
+| `-` | `-"C:\Program Files\app.exe"` or `-ps:shutdown /r /f /t 0` | Runs as administrator. |
+| `*` | `*cmd:tasklist` or `*ps:Get-Process` | Execution with a terminal window. (only for `cmd:` and `ps:` prefixes). |
 
 Signs can be combined: `-*cmd:tasklist` runs cmd in a visible window as admin.
