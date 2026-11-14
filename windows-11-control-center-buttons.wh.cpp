@@ -1,7 +1,7 @@
 // ==WindhawkMod==
 // @id                  windows-11-control-center-buttons
 // @name                Windows 11 Control Center Buttons
-// @description         Replaces the gear button in the Windows 11 Control Center footer with fully customizable buttons.
+// @description         Replaces the gear button in the Windows 11 Control Center footer with fully customizable buttons and separators.
 // @version             1.0.0
 // @author              Salyts
 // @github              https://github.com/Salyts
@@ -32,12 +32,17 @@ Actions are run by a dedicated Windhawk tool-mod process (`windhawk.exe -tool-mo
 
 | Field | Description |
 |---|---|
-| **Preset** | Ready-made button. Set `Custom` to define your own. |
+| **Preset** | Ready-made button, `Separator` for a vertical divider, or `Custom` to define your own. |
 | **Name** | Tooltip. Empty on presets = default name. |
-| **Icon** | Segoe Fluent glyph (`E713` or `\uE713`), image path (PNG/ICO/JPG/BMP/WEBP) or `.exe`/`.dll` path to take the icon from. |
+| **Icon** | Segoe Fluent glyph (`E713` or `\uE713`), image path (PNG/ICO/JPG/BMP/WEBP), `.exe`/`.dll` path to take the icon from, or optional hex color (`#RRGGBB` / `#AARRGGBB`) when `Preset = Separator`. |
 | **Action** | Used for `Custom`. One or several commands, run in order. |
-| **Left-click submenu** | Menu opened on left click (replaces Action). |
-| **Right-click submenu** | Menu opened on right click. |
+| **Left-click submenu** | Menu opened on left click (replaces Action). Enter `---` (or `-`) as Item name for a horizontal separator. |
+| **Right-click submenu** | Menu opened on right click. Enter `---` (or `-`) as Item name for a horizontal separator. |
+
+## Separators
+
+- **Footer (vertical separator):** Add a button entry and set **Preset = Separator** (or set **Preset = Custom** with **Name = `---`** and leave Action empty). Leave **Icon** empty for automatic Windows 11 Light/Dark theme color, or enter `#RRGGBB` / `#AARRGGBB` (e.g. `#40FFFFFF`) for a custom color. Adjust **Separator slot width** and **Separator height** in general settings.
+- **Submenus (horizontal separator):** Add a submenu item with **Item name = `---`** (or `-`) and leave its action empty.
 
 ## Action formats
 
@@ -99,6 +104,14 @@ Signs can be combined: `-*cmd:tasklist` runs cmd in a visible window as admin.
   $name: Spacing between buttons (px)
   $description: Horizontal margin between each button.
 
+- separator_width: 10
+  $name: Separator slot width (px)
+  $description: Total horizontal space occupied by a footer separator (min 1 px; the 1 px vertical line is centered inside).
+
+- separator_height: 18
+  $name: Separator height (px)
+  $description: Height of the vertical separator line in the Control Center footer (1-36 px).
+
 - container_margin_left: 8
   $name: Container left margin (px)
   $description: Left margin of the custom button container. Negative values pull it outward.
@@ -110,9 +123,10 @@ Signs can be combined: `-*cmd:tasklist` runs cmd in a visible window as admin.
 - buttons:
     - - Preset: menu_shutdown
         $name: Preset
-        $description: "Choose a built-in preset button, or select Custom to define your own Name / Icon / Action."
+        $description: "Choose a built-in preset button, select Separator for a vertical divider, or select Custom to define your own Name / Icon / Action."
         $options: 
           - custom: Custom
+          - separator: Separator
           - settings: Settings
           - explorer: Explorer
           - documents: Documents
@@ -134,7 +148,7 @@ Signs can be combined: `-*cmd:tasklist` runs cmd in a visible window as admin.
         $description: "Tooltip shown on hover. Leave empty on preset buttons to use the preset default."
       - Icon: ""
         $name: Icon
-        $description: "Segoe Fluent glyph (e.g. E7E8 or \\uE7E8), image path (e.g. C:\\Icons\\app.png), or app path (e.g. C:\\Program Files\\app.exe)."
+        $description: "Segoe Fluent glyph (e.g. E7E8 or \\uE7E8), image path (e.g. C:\\Icons\\app.png), app path (e.g. C:\\Program Files\\app.exe), or optional hex color (#RRGGBB / #AARRGGBB) when Preset = Separator."
       - Action: [""]
         $name: Action
         $description: "Only used when Preset = Custom. See mod description for supported formats. If there is a Left-click submenu, this option does not work."
@@ -162,7 +176,7 @@ Signs can be combined: `-*cmd:tasklist` runs cmd in a visible window as admin.
                   $name: Level 3 submenu
               $name: Level 2 submenu
         $name: Left-click submenu
-        $description: "Each item can have nested submenus up to 3 levels deep total."
+        $description: "Each item can have nested submenus up to 3 levels deep total. Enter --- (or -) as Item name to insert a horizontal separator."
       - rightClickSubmenu:
           - - name: ""
               $name: Item name
@@ -187,7 +201,7 @@ Signs can be combined: `-*cmd:tasklist` runs cmd in a visible window as admin.
                   $name: Level 3 submenu
               $name: Level 2 submenu
         $name: Right-click submenu
-        $description: "Each item can have nested submenus up to 3 levels deep total."
+        $description: "Each item can have nested submenus up to 3 levels deep total. Enter --- (or -) as Item name to insert a horizontal separator."
     - - Preset: settings
     - - Preset: explorer
   $name: Buttons
@@ -276,6 +290,8 @@ struct Settings {
     bool                     closeFlyout          = true;
     bool                     hideOriginalSettings = true;
     int                      buttonSpacing        = 0;
+    int                      separatorWidth       = 10;
+    int                      separatorHeight      = 18;
     int                      containerMarginLeft  = 0;
     int                      containerMarginRight = 0;
     bool                     langRussian          = false;
@@ -288,6 +304,7 @@ struct ActionItem {
     std::vector<ActionItem> submenu;
     std::vector<ActionItem> rightClickSubmenu;
     int actionId = -1;
+    bool isSeparator = false;
 };
 
 static Settings                g_settings;
@@ -1210,7 +1227,7 @@ static void CloseFlyoutForPress() {
 static void RegisterActions(std::vector<ActionItem>& items,
                             std::vector<std::vector<std::wstring>>& reg) {
     for (auto& it : items) {
-        if (!it.actionArray.empty()) {
+        if (!it.isSeparator && !it.actionArray.empty()) {
             it.actionId = static_cast<int>(reg.size());
             reg.push_back(it.actionArray);
         }
@@ -1362,6 +1379,12 @@ static void LoadSettings() {
     s.closeFlyout            = Wh_GetIntSetting(L"close_flyout")            != 0;
     s.hideOriginalSettings   = Wh_GetIntSetting(L"hide_original_settings")  != 0;
     s.buttonSpacing          = Wh_GetIntSetting(L"button_spacing");
+
+    int sepWidth             = Wh_GetIntSetting(L"separator_width");
+    int sepHeight            = Wh_GetIntSetting(L"separator_height");
+    s.separatorWidth         = (sepWidth  > 0) ? std::clamp(sepWidth,  1, 128) : 10;
+    s.separatorHeight        = (sepHeight > 0) ? std::clamp(sepHeight, 1, 36)  : 18;
+
     s.containerMarginLeft    = Wh_GetIntSetting(L"container_margin_left");
     s.containerMarginRight   = Wh_GetIntSetting(L"container_margin_right");
 
@@ -1370,6 +1393,10 @@ static void LoadSettings() {
 
     std::lock_guard<std::mutex> lk(g_settingsMutex);
     g_settings = s;
+}
+
+static bool IsSeparatorToken(const std::wstring& s) {
+    return s == L"-" || s == L"--" || s == L"---";
 }
 
 static std::vector<ActionItem> LoadSubmenuRecursive(const std::wstring& basePath, int depth = 0) {
@@ -1389,7 +1416,8 @@ static std::vector<ActionItem> LoadSubmenuRecursive(const std::wstring& basePath
 
         SafeFreeString(n); SafeFreeString(ic);
 
-        if (Trim(name).empty()) break;
+        std::wstring trimmedName = Trim(name);
+        if (trimmedName.empty()) break;
 
         std::vector<std::wstring> actionArray;
         for (int k = 0; k < 64; ++k) {
@@ -1407,16 +1435,27 @@ static std::vector<ActionItem> LoadSubmenuRecursive(const std::wstring& basePath
             actionArray.push_back(std::move(cmdStr));
         }
 
-        ActionItem item;
-        item.name        = Trim(name);
-        item.icon        = Trim(icon);
-        item.actionArray = std::move(actionArray);
-
         std::wstring submenuPath = basePath + L"[" + std::to_wstring(j) + L"].submenu";
-        item.submenu = LoadSubmenuRecursive(submenuPath, depth + 1);
+        auto sub = LoadSubmenuRecursive(submenuPath, depth + 1);
 
         std::wstring rightClickPath = basePath + L"[" + std::to_wstring(j) + L"].rightClickSubmenu";
-        item.rightClickSubmenu = LoadSubmenuRecursive(rightClickPath, depth + 1);
+        auto rightSub = LoadSubmenuRecursive(rightClickPath, depth + 1);
+
+        ActionItem item;
+        if ((IsSeparatorToken(trimmedName) ||
+             _wcsicmp(trimmedName.c_str(), L"separator") == 0) &&
+            actionArray.empty() && sub.empty()) {
+            item.isSeparator = true;
+            item.name        = std::move(trimmedName);
+            items.push_back(std::move(item));
+            continue;
+        }
+
+        item.name              = std::move(trimmedName);
+        item.icon              = Trim(icon);
+        item.actionArray       = std::move(actionArray);
+        item.submenu           = std::move(sub);
+        item.rightClickSubmenu = std::move(rightSub);
 
         items.push_back(std::move(item));
     }
@@ -1446,10 +1485,20 @@ static void BuildButtons() {
 
         std::wstring preset    = presetRaw ? presetRaw : L"";
         std::wstring rawName   = nRaw ? nRaw : L"";
-        std::wstring rawIcon   = DecodeEscapes(NormalizeIconString(iRaw ? iRaw : L""));
+        std::wstring rawIconIn = iRaw ? iRaw : L"";
+        std::wstring rawIcon   = DecodeEscapes(NormalizeIconString(rawIconIn));
 
         SafeFreeString(presetRaw); SafeFreeString(nRaw);
         SafeFreeString(iRaw);
+
+        std::wstring presetKey = ToLower(Trim(preset));
+        if (presetKey == L"separator") {
+            ActionItem sepItem;
+            sepItem.isSeparator = true;
+            sepItem.icon        = Trim(StripOuterQuotes(rawIconIn));
+            newButtons.push_back(std::move(sepItem));
+            continue;
+        }
 
         std::vector<std::wstring> actionArray;
         for (int k = 0; k < 64; ++k) {
@@ -1476,7 +1525,6 @@ static void BuildButtons() {
             SafeFreeString(oldAction);
         }
 
-        std::wstring presetKey = ToLower(Trim(preset));
         bool isCustom = (presetKey == L"custom" || presetKey.empty());
 
         if (isCustom) {
@@ -1490,6 +1538,18 @@ static void BuildButtons() {
         const PresetDef* pd = FindPreset(preset);
         auto userSub = LoadSubmenu(i);
         auto userRightSub = LoadRightClickSubmenu(i);
+
+        if (isCustom &&
+            IsSeparatorToken(Trim(rawName)) &&
+            actionArray.empty() &&
+            userSub.empty() &&
+            userRightSub.empty()) {
+            ActionItem sepItem;
+            sepItem.isSeparator = true;
+            sepItem.icon        = Trim(StripOuterQuotes(rawIconIn));
+            newButtons.push_back(std::move(sepItem));
+            continue;
+        }
 
         ActionItem item;
 
@@ -1694,9 +1754,106 @@ static void Keep(std::optional<std::vector<std::shared_ptr<void>>>& bag, R&& r) 
     bag->push_back(std::make_shared<std::decay_t<R>>(std::forward<R>(r)));
 }
 
+static bool TryParseHexColor(const std::wstring& raw, wu::Color& outColor) {
+    std::wstring s = Trim(raw);
+    if (s.empty() || s.front() != L'#') return false;
+    s.erase(s.begin());
+    if (s.size() != 6 && s.size() != 8) return false;
+    for (wchar_t c : s) {
+        if (!((c >= L'0' && c <= L'9') ||
+              (c >= L'a' && c <= L'f') ||
+              (c >= L'A' && c <= L'F')))
+            return false;
+    }
+    unsigned long val = wcstoul(s.c_str(), nullptr, 16);
+    if (s.size() == 6) {
+        outColor = wu::ColorHelper::FromArgb(
+            0xFF,
+            static_cast<uint8_t>((val >> 16) & 0xFF),
+            static_cast<uint8_t>((val >> 8)  & 0xFF),
+            static_cast<uint8_t>( val        & 0xFF));
+    } else {
+        outColor = wu::ColorHelper::FromArgb(
+            static_cast<uint8_t>((val >> 24) & 0xFF),
+            static_cast<uint8_t>((val >> 16) & 0xFF),
+            static_cast<uint8_t>((val >> 8)  & 0xFF),
+            static_cast<uint8_t>( val        & 0xFF));
+    }
+    return true;
+}
+
+static void ApplySeparatorThemeBrush(wuxc::Border const& line,
+                                     wux::FrameworkElement const& host) {
+    if (!line) return;
+    wux::ElementTheme theme = line.ActualTheme();
+    if (theme == wux::ElementTheme::Default && host)
+        theme = host.ActualTheme();
+
+    bool isLight = false;
+    if (theme == wux::ElementTheme::Light) {
+        isLight = true;
+    } else if (theme == wux::ElementTheme::Default) {
+        try {
+            isLight = (wux::Application::Current().RequestedTheme() ==
+                       wux::ApplicationTheme::Light);
+        } catch (...) {}
+    }
+
+    wu::Color col = isLight
+        ? wu::ColorHelper::FromArgb(0x2E, 0x00, 0x00, 0x00)
+        : wu::ColorHelper::FromArgb(0x33, 0xFF, 0xFF, 0xFF);
+    line.Background(wuxm::SolidColorBrush(col));
+}
+
+static wux::UIElement MakeFooterSeparator(const ActionItem& def,
+                                          int slotWidth,
+                                          int lineHeight,
+                                          double rightMargin,
+                                          wux::FrameworkElement const& host) {
+    int safeWidth  = std::clamp(slotWidth,  1, 128);
+    int safeHeight = std::clamp(lineHeight, 1, 36);
+
+    wuxc::Border line;
+    line.Width(1.0);
+    line.Height(static_cast<double>(safeHeight));
+    line.CornerRadius({ 0.5, 0.5, 0.5, 0.5 });
+    line.HorizontalAlignment(wux::HorizontalAlignment::Center);
+    line.VerticalAlignment(wux::VerticalAlignment::Center);
+    line.IsHitTestVisible(false);
+
+    wu::Color customColor{};
+    if (TryParseHexColor(def.icon, customColor)) {
+        line.Background(wuxm::SolidColorBrush(customColor));
+    } else {
+        ApplySeparatorThemeBrush(line, host);
+        Keep(g_revokers, line.Loaded(winrt::auto_revoke,
+            [](wf::IInspectable const& sender, wux::RoutedEventArgs const&) {
+                if (auto b = sender.try_as<wuxc::Border>())
+                    ApplySeparatorThemeBrush(b, nullptr);
+            }));
+        Keep(g_revokers, line.ActualThemeChanged(winrt::auto_revoke,
+            [](wux::FrameworkElement const& sender, wf::IInspectable const&) {
+                if (auto b = sender.try_as<wuxc::Border>())
+                    ApplySeparatorThemeBrush(b, nullptr);
+            }));
+    }
+
+    wuxc::Grid slot;
+    slot.Width(static_cast<double>(safeWidth));
+    slot.Height(36.0);
+    slot.Margin({ 0, 0, rightMargin, 0 });
+    slot.IsHitTestVisible(false);
+    slot.Children().Append(line);
+    return slot;
+}
+
 template <class TParent>
 static void FillMenu(TParent const& parent, const std::vector<ActionItem>& items, bool invertIcons) {
     for (const auto& item : items) {
+        if (item.isSeparator) {
+            parent.Items().Append(wuxc::MenuFlyoutSeparator());
+            continue;
+        }
         std::wstring icon = item.icon.empty() ? std::wstring(FALLBACK_ICON) : item.icon;
         if (!item.submenu.empty()) {
             wuxc::MenuFlyoutSubItem sub;
@@ -1761,7 +1918,8 @@ static void AttachRightClickMenu(wuxc::Button const& btn, std::vector<ActionItem
         }));
 }
 
-static wuxc::StackPanel BuildContainer(const Settings& cur, std::vector<ActionItem> btns) {
+static wuxc::StackPanel BuildContainer(const Settings& cur, std::vector<ActionItem> btns,
+                                       wux::FrameworkElement const& host) {
     if (cur.invertButtons) std::reverse(btns.begin(), btns.end());
 
     wuxc::StackPanel container;
@@ -1774,10 +1932,17 @@ static wuxc::StackPanel BuildContainer(const Settings& cur, std::vector<ActionIt
 
     for (size_t i = 0; i < btns.size(); ++i) {
         const auto& def = btns[i];
+        double rightMargin = (i + 1 < btns.size()) ? static_cast<double>(cur.buttonSpacing) : 0.0;
+
+        if (def.isSeparator) {
+            container.Children().Append(
+                MakeFooterSeparator(def, cur.separatorWidth, cur.separatorHeight,
+                                    rightMargin, host));
+            continue;
+        }
 
         wuxc::Button btn;
         btn.Width(36); btn.Height(36);
-        double rightMargin = (i + 1 < btns.size()) ? static_cast<double>(cur.buttonSpacing) : 0.0;
         btn.Margin({ 0, 0, rightMargin, 0 });
         btn.Background(wuxm::SolidColorBrush(wu::Colors::Transparent()));
         btn.BorderThickness({ 0, 0, 0, 0 });
@@ -1909,7 +2074,7 @@ static bool InjectInto(wux::FrameworkElement const& view) {
         return false;
     }
 
-    container = BuildContainer(cur, btns);
+    container = BuildContainer(cur, btns, footer);
 
     wuxc::Panel host = panel;
     bool spanFooter = false;

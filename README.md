@@ -14,12 +14,17 @@ Actions are run by a dedicated Windhawk tool-mod process (`windhawk.exe -tool-mo
 
 | Field | Description |
 |---|---|
-| **Preset** | Ready-made button. Set `Custom` to define your own. |
+| **Preset** | Ready-made button, `Separator` for a vertical divider, or `Custom` to define your own. |
 | **Name** | Tooltip. Empty on presets = default name. |
-| **Icon** | Segoe Fluent glyph (`E713` or `\uE713`), image path (PNG/ICO/JPG/BMP/WEBP) or `.exe`/`.dll` path to take the icon from. |
+| **Icon** | Segoe Fluent glyph (`E713` or `\uE713`), image path (PNG/ICO/JPG/BMP/WEBP), `.exe`/`.dll` path to take the icon from, or optional hex color (`#RRGGBB` / `#AARRGGBB`) when `Preset = Separator`. |
 | **Action** | Used for `Custom`. One or several commands, run in order. |
-| **Left-click submenu** | Menu opened on left click (replaces Action). |
-| **Right-click submenu** | Menu opened on right click. |
+| **Left-click submenu** | Menu opened on left click (replaces Action). Enter `---` (or `-`) as Item name for a horizontal separator. |
+| **Right-click submenu** | Menu opened on right click. Enter `---` (or `-`) as Item name for a horizontal separator. |
+
+## Separators
+
+- **Footer (vertical separator):** Add a button entry and set **Preset = Separator** (or set **Preset = Custom** with **Name = `---`** and leave Action empty). Leave **Icon** empty for automatic Windows 11 Light/Dark theme color, or enter `#RRGGBB` / `#AARRGGBB` (e.g. `#40FFFFFF`) for a custom color. Adjust **Separator slot width** and **Separator height** in general settings.
+- **Submenus (horizontal separator):** Add a submenu item with **Item name = `---`** (or `-`) and leave its action empty.
 
 ## Action formats
 
